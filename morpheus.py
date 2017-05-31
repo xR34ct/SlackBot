@@ -17,15 +17,15 @@ def handle_command(command, channel):
     response = "Not sure what you mean Mortal"
     if command.startswith('inv'):
 	try:
-	       	with open('../scripts/.inv') as f: s = f.read()
-		response = 'The gods are offering these services:\n\n' + s
+	       	with open(FILE_PATH + '.inv') as f: s = f.read()
+		response = 'The gods are offering these services:\n' + s
 	except OSError:
 		response = 'Nothing here Mortal'
     if command.startswith('ok'):
 	try:
-		if os.stat('../scripts/.alerts').st_size > 0:
-			with open('../scripts/.alerts') as f: s = f.read()
-			response = 'The following services of the gods are unavailable:\n\n' + s
+		if os.stat(FILE_PATH + '.alerts').st_size > 0:
+			with open(FILE_PATH + '.alerts') as f: s = f.read()
+			response = 'The following services of the gods are unavailable:\n' + s
 		else:
 			response = 'The god are generous Mortal'
 	except OSError:
