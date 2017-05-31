@@ -3,14 +3,8 @@ import time
 from slackclient import SlackClient
 from env import *
 
-# starterbot's ID as an environment variable
-#BOT_ID = os.environ.get("BOT_ID")
-
-# constants
 AT_BOT = "<@" + BOT_ID + ">"
 
-
-# instantiate Slack & Twilio clients
 slack_client = SlackClient(SLACK_BOT_TOKEN)
 
 
@@ -23,14 +17,14 @@ def handle_command(command, channel):
     response = "Not sure what you mean Mortal"
     if command.startswith('inv'):
 	try:
-	       	with open('/home/xr34ct/Documents/scripts/.inv') as f: s = f.read()
+	       	with open('../scripts/.inv') as f: s = f.read()
 		response = 'The gods are offering these services:\n\n' + s
 	except OSError:
 		response = 'Nothing here Mortal'
     if command.startswith('ok'):
 	try:
-		if os.stat('/home/xr34ct/Documents/scripts/.alerts').st_size > 0:
-			with open('/home/xr34ct/Documents/scripts/.alerts') as f: s = f.read()
+		if os.stat('../scripts/.alerts').st_size > 0:
+			with open('../scripts/.alerts') as f: s = f.read()
 			response = 'The following services of the gods are unavailable:\n\n' + s
 		else:
 			response = 'The god are generous Mortal'
