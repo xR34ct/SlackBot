@@ -58,7 +58,7 @@ def monitor():
                                 	        IN_ALERTS = 'true'
 
 	                        if bool(RESULT) and IN_ALERTS == 'true':
-					print(HOSTNAME + 'port ' + PORT + ' RESOLVED')
+					print('RESOLVED')
 					#For Slack automatic
         	                        del alerts[ORDER]
 					pre_response = 'The following service just became RESOLVED:'
@@ -73,11 +73,13 @@ def monitor():
 					f.close()
 					f = open(FILE_PATH + '.alerts','w')
 					for rad in rader:
-						if rad != str(IP) + '\t' + str(PORT):
+						print(rad)
+						print(IP + '\t' + PORT)
+						if rad != str(IP) + '\t' + str(PORT) + '\n':
 							f.write(rad)
 					f.close()
                 	        elif not bool(RESULT) and IN_ALERTS == 'false':
-					print(HOSTNAME + 'port ' + PORT + ' DOWN')
+					print('DOWN')
 					#For Slack automatic
                         	        alerts[ORDER] = ORDER
 					pre_response = 'The following service just went DOWN:'
@@ -87,8 +89,8 @@ def monitor():
 					slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
 
 					#For Slack question
-					f = open(FILE_PATH + '.alerts','w')
-					f.write(IP + '\t' + PORT + '\n')
+					f = open(FILE_PATH + '.alerts','a')
+					f.write(str(IP) + '\t' + str(PORT) + '\n')
 					f.close()
 	time.sleep(1)
 
