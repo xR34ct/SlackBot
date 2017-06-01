@@ -5,13 +5,15 @@ from env import *
 import time
 from threading import Thread
 import subprocess
+import json
 
 AT_BOT = "<@" + BOT_ID + ">"
 slack_client = SlackClient(SLACK_BOT_TOKEN)
 
 def monitor():
 	alerts = {}
-	channel = 'Monitoring'
+	channel = 'monitoring'
+#	channel = 'anet-testing'
 	while True:
 		for line in open(FILE_PATH+'.inv','r'):
 			if not "#" in line:
@@ -32,17 +34,39 @@ def monitor():
 					if returncode != 1:
 						raise
 
+				ps = subprocess.Popen((['/usr/bin/nmap', '-sP', IP]), stdout=subprocess.PIPE)
+				try:
+					HOSTNAME = subprocess.check_output(('grep', '-o',  "[A-Za-z]\+\.avdagic"), stdin=ps.stdout)
+					returncode = 0
+				except subprocess.CalledProcessError as ex:
+                                        HOSTNAME = ''
+                                        returncode = ex.returncode
+                                        if returncode != 1:
+                                                raise				
+				ps = subprocess.Popen(('echo', HOSTNAME), stdout=subprocess.PIPE)
+				try:
+                                        HOSTNAME = subprocess.check_output(('cut', '-d.', '-f1'), stdin=ps.stdout)
+                                        returncode = 0
+                                except subprocess.CalledProcessError as ex:
+                                        HOSTNAME = ''
+                                        returncode = ex.returncode
+                                        if returncode != 1:
+                                                raise
+				
                 	        if bool(alerts):
                         	        if ORDER in alerts:
                                 	        IN_ALERTS = 'true'
 
 	                        if bool(RESULT) and IN_ALERTS == 'true':
-					print('UP')
+					print(HOSTNAME + 'port ' + PORT + ' RESOLVED')
 					#For Slack automatic
         	                        del alerts[ORDER]
-					response = SERVICE + ' on ' + IP + ':' + PORT + ' is resolved'
-					slack_client.api_call("chat.postMessage", channel=channel,text=response, as_user=True)
-			
+					pre_response = 'The following service just became RESOLVED:'
+					response = SERVICE + ' on ' + HOSTNAME
+					color='good'
+					msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
+					slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
+
 					#For Slack question
 					f = open(FILE_PATH + '.alerts','r')
 					rader = f.readlines()
@@ -53,37 +77,47 @@ def monitor():
 							f.write(rad)
 					f.close()
                 	        elif not bool(RESULT) and IN_ALERTS == 'false':
-					print('DOWN')
+					print(HOSTNAME + 'port ' + PORT + ' DOWN')
 					#For Slack automatic
                         	        alerts[ORDER] = ORDER
-					response = SERVICE + ' on ' + IP + ':' + PORT + ' is DOWN'
-                                        slack_client.api_call("chat.postMessage", channel=channel,text=response, as_user=True)
+					pre_response = 'The following service just went DOWN:'
+					response = SERVICE + ' on ' + HOSTNAME
+					color='danger'
+					msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
+					slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
 
 					#For Slack question
 					f = open(FILE_PATH + '.alerts','w')
 					f.write(IP + '\t' + PORT + '\n')
-					f.close() 
+					f.close()
 	time.sleep(1)
 
 
 def handle_command(command, channel):
 	response = "Not sure what you mean Mortal"
+	color = 'good'
 	if command.startswith('inv'):
+		response = ''
 		try:
 		       	with open(FILE_PATH + '.inv') as f: s = f.read()
-			response = 'The gods are offering these services:\n' + s
+			pre_response = 'The gods are offering these services:'
+			response = s
 		except OSError:
-			response = 'Nothing here Mortal'
+			pre_resonse = 'Nothing here Mortal'
 	if command.startswith('ok'):
+		response = ''
 		try:
 			if os.stat(FILE_PATH + '.alerts').st_size > 0:
 				with open(FILE_PATH + '.alerts') as f: s = f.read()
-				response = 'The following services of the gods are unavailable:\n' + s
+				pre_response = 'The following services of the gods are unavailable:'
+				response = s
+				color = 'danger'
 			else:
-				response = 'The god are generous Mortal'
+				pre_response = 'The god are generous Mortal'
 		except OSError:
-				response = 'Nothing here Mortal'
-	slack_client.api_call("chat.postMessage", channel=channel,text=response, as_user=True)
+				pre_resonse = 'Nothing here Mortal'
+	msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
+	slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
 
 def parse_slack_output(slack_rtm_output):
 	output_list = slack_rtm_output
