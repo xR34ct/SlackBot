@@ -13,6 +13,7 @@ slack_client = SlackClient(SLACK_BOT_TOKEN)
 def monitor():
 	alerts = {}
 	channel = 'monitoring'
+	delay = 1
 #	channel = 'anet-testing'
 	while True:
 		for line in open(FILE_PATH+'.inv','r'):
@@ -92,22 +93,26 @@ def monitor():
 					f = open(FILE_PATH + '.alerts','a')
 					f.write(str(IP) + '\t' + str(PORT) + '\n')
 					f.close()
-	time.sleep(1)
+		time.sleep(DELAY)
 
 
 def handle_command(command, channel):
-	response = "Not sure what you mean Mortal"
-	color = 'good'
+	pre_response = "Not sure what you mean Mortal"
+	response = "Try either ok or inventroy to see what the gods are offering"
+	color = '#00FFFF'
 	if command.startswith('inv'):
 		response = ''
+		color = 'good'
 		try:
 		       	with open(FILE_PATH + '.inv') as f: s = f.read()
 			pre_response = 'The gods are offering these services:'
 			response = s
 		except OSError:
 			pre_resonse = 'Nothing here Mortal'
+			color = 'danger'
 	if command.startswith('ok'):
 		response = ''
+		color = 'good'
 		try:
 			if os.stat(FILE_PATH + '.alerts').st_size > 0:
 				with open(FILE_PATH + '.alerts') as f: s = f.read()
@@ -118,6 +123,7 @@ def handle_command(command, channel):
 				pre_response = 'The god are generous Mortal'
 		except OSError:
 				pre_resonse = 'Nothing here Mortal'
+				color = 'danger'
 	msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
 	slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
 
@@ -137,9 +143,12 @@ if __name__ == "__main__":
 		thread = Thread(target=monitor)
 		thread.start()
 		while True:
-			command, channel = parse_slack_output(slack_client.rtm_read())
-			if command and channel:
-				handle_command(command, channel)
-				time.sleep(READ_WEBSOCKET_DELAY)
+			try:
+		                command, channel = parse_slack_output(slack_client.rtm_read())
+               			if command and channel:
+		                    handle_command(command, channel)
+                			time.sleep(READ_WEBSOCKET_DELAY)
+            		except socket.error:
+		                slack_client.rtm_connect()
 	else:
         	print("Connection failed. Invalid Slack token or bot ID?")
