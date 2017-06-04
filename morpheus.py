@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from slackclient import SlackClient
 from env import *
@@ -10,11 +11,14 @@ import json
 AT_BOT = "<@" + BOT_ID + ">"
 slack_client = SlackClient(SLACK_BOT_TOKEN)
 
+CHANNEL = sys.argv[1]
+
 def monitor():
 	alerts = {}
-	channel = 'monitoring'
+#	channel = 'monitoring'
 	DELAY = 1
 #	channel = 'anet-testing'
+	channel = CHANNEL
 	while True:
 		for line in open(FILE_PATH+'.inv','r'):
 			if not "#" in line:
@@ -35,12 +39,15 @@ def monitor():
 					if returncode != 1:
 						raise
 
-				ps = subprocess.Popen((['/usr/bin/nmap', '-sP', IP]), stdout=subprocess.PIPE)
+				ps = subprocess.Popen((['/usr/bin/nmap', '-oG', '-', IP]), stdout=subprocess.PIPE)
+
 				try:
-					HOSTNAME = subprocess.check_output(('grep', '-o',  "[A-Za-z]\+\.avdagic"), stdin=ps.stdout)
+					HOSTNAME = subprocess.check_output(('awk', '/Status/ {print $3}'), stdin=ps.stdout)
+				#	print HOSTNAME
 					returncode = 0
 				except subprocess.CalledProcessError as ex:
-                                        HOSTNAME = ''
+                                #       print("Nagot gick at helvete")
+					HOSTNAME = ''
                                         returncode = ex.returncode
                                         if returncode != 1:
                                                 raise				
@@ -59,7 +66,7 @@ def monitor():
                                 	        IN_ALERTS = 'true'
 
 	                        if bool(RESULT) and IN_ALERTS == 'true':
-					print('RESOLVED')
+#					print('RESOLVED')
 					#For Slack automatic
         	                        del alerts[ORDER]
 					pre_response = 'The following service just became RESOLVED:'
@@ -74,13 +81,13 @@ def monitor():
 					f.close()
 					f = open(FILE_PATH + '.alerts','w')
 					for rad in rader:
-						print(rad)
-						print(IP + '\t' + PORT)
+#						print(rad)
+#						print(IP + '\t' + PORT)
 						if rad != str(IP) + '\t' + str(PORT) + '\n':
 							f.write(rad)
 					f.close()
                 	        elif not bool(RESULT) and IN_ALERTS == 'false':
-					print('DOWN')
+#					print('DOWN')
 					#For Slack automatic
                         	        alerts[ORDER] = ORDER
 					pre_response = 'The following service just went DOWN:'
