@@ -13,7 +13,7 @@ slack_client = SlackClient(SLACK_BOT_TOKEN)
 def monitor():
 	alerts = {}
 	channel = 'monitoring'
-	delay = 1
+	DELAY = 1
 #	channel = 'anet-testing'
 	while True:
 		for line in open(FILE_PATH+'.inv','r'):
@@ -146,8 +146,8 @@ if __name__ == "__main__":
 			try:
 		                command, channel = parse_slack_output(slack_client.rtm_read())
                			if command and channel:
-		                    handle_command(command, channel)
-                			time.sleep(READ_WEBSOCKET_DELAY)
+					handle_command(command, channel)
+              				time.sleep(READ_WEBSOCKET_DELAY)
             		except socket.error:
 		                slack_client.rtm_connect()
 	else:
