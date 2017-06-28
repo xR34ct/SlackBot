@@ -7,6 +7,7 @@ import time
 from threading import Thread
 import subprocess
 import json
+import socket
 
 AT_BOT = "<@" + BOT_ID + ">"
 slack_client = SlackClient(SLACK_BOT_TOKEN)
