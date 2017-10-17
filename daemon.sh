@@ -5,7 +5,7 @@ start () {
 }
 
 stop () {
-	pid=$(pgrep -f morpheus)
+	pid=$(pgrep -f morpheus.py)
 	kill "$pid"
 }
 
