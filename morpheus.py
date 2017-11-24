@@ -12,7 +12,7 @@ from env import *
 #BOT_ID = os.environ.get("BOT_ID")
 AT_BOT = "<@" + BOT_ID + ">"
 
-INVENTORY_FILE = FILE_PATH + '.inv'
+INVENTORY_FILE = "/etc/avdagic.net/inv"
 OUTAGE_FILE = "/tmp/inventory-alerts"
 #ALERT_CHANNEL = "#monitoring"
 COMMANDS = ['list', 'inventory', 'outages', 'scan/sweep', 'ip']
@@ -35,7 +35,7 @@ def response_ip():
 
 def response_scan():
     print ("Preparing response scan")
-    command = "/bin/bash inventory-sweep.sh -i " + INVENTORY_FILE
+    command = "/bin/bash inventory_sweep.sh -i " + INVENTORY_FILE
     process = subprocess.Popen(command.split())
     output, error = process.communicate()
     return {'pre_response':'The gods will now be scaned', 'response':response}
