@@ -1,7 +1,7 @@
 #!/bin/sh
 
 start () { 
-	/home/xr34ct/morpheus/bin/python /home/xr34ct/Documents/morpheus/morpheus.py monitoring > /home/xr34ct/Documents/morpheus/.logs 2>&1 &
+	/home/xr34ct/morpheus/bin/python -u /home/xr34ct/Documents/morpheus/morpheus.py monitoring 2>&1 >> /home/xr34ct/Documents/morpheus/.logs &
 }
 
 stop () {

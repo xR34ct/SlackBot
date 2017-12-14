@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import datetime
 import socket
 import subprocess
 from threading import Thread
@@ -21,62 +22,71 @@ ALERT_CHANNEL = sys.argv[1]
 # instantiate Slack & Twilio clients
 slack_client = SlackClient(SLACK_BOT_TOKEN)
 
+
+
+
 def response_list():
-    print ("Preparing response list...")
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Preparing response list...")
     pre_response = 'These are the commands the gods anwser to'
     response = '\n'.join(COMMANDS)
-    return {'pre_response':pre_response, 'response':response}
+    return {'pre_response': pre_response, 'response': response}
+
 
 def response_ip():
-    print ("Preparing response ip")
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Preparing response ip")
     pre_response = 'The IP of the gods is:'
     response = ipgetter.myip()
-    return {'pre_response':pre_response, 'response':response}
+    return {'pre_response': pre_response, 'response': response}
+
 
 def response_scan():
-    print ("Preparing response scan")
-    command = "/bin/bash inventory_sweep.sh -i " + INVENTORY_FILE
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Preparing response scan")
+    command = "/bin/bash /home/xr34ct/Documents/morpheus/inventory_sweep.sh -i " + INVENTORY_FILE
     process = subprocess.Popen(command.split())
     output, error = process.communicate()
-    return {'pre_response':'The gods will now be scaned', 'response':response}
+    return {'pre_response': 'The gods will now be scaned', 'response': output}
+
 
 def response_inventory():
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Preparing response inventory")
     response = ''
     color = 'good'
     try:
-        with open(INVENTORY_FILE) as f: s = f.read()
+        with open(INVENTORY_FILE) as f:
+            s = f.read()
         if os.stat(INVENTORY_FILE).st_size == 0:
             pre_response = 'Nothing here Mortal'
             response = 'The inventory of the gods is empty'
             color = 'danger'
-            return {'pre_response':pre_response, 'response':response, 'color':color}
+            return {'pre_response': pre_response, 'response': response, 'color': color}
         pre_response = 'The gods are offering these services:'
         response = s
-        return {'pre_response':pre_response, 'response':response, 'color':color}
+        return {'pre_response': pre_response, 'response': response, 'color': color}
     except IOError:
         pre_resonse = 'Nothing here Mortal'
         response = 'Could not find the inventory of the gods'
         color = 'danger'
-        return {'pre_response':pre_response, 'response':response, 'color':color}
+        return {'pre_response': pre_response, 'response': response, 'color': color}
 
 def response_outages():
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Preparing response outages")
     try:
         with open(OUTAGE_FILE) as f: s = f.read
         if os.stat(OUTAGE_FILE).st_size == 0:
             pre_response = 'The god are generous Mortal'
             response = 'No services are down'
-            color = 'good'    
-            return {'pre_response':pre_response, 'response':response, 'color':color}
+            color = 'good'  
+            return {'pre_response': pre_response, 'response': response, 'color': color}
         else:
             pre_response = 'The following services of the gods are unavailable:'
             response = s
             color = 'danger'
-            return {'pre_response':pre_response, 'response':response, 'color':color}               
+            return {'pre_response': pre_response, 'response': response, 'color': color}               
     except IOError:
         pre_response = 'The god are generous Mortal'
         response = 'No services are down'
         color = 'good'
-        return {'pre_response':pre_response, 'response':response, 'color':color}    
+        return {'pre_response': pre_response, 'response': response, 'color': color}    
 
 PIPE_FILE = "/tmp/monitor_pipe"
 if not os.path.exists(PIPE_FILE):
@@ -90,11 +100,15 @@ def monitor_alerts(pipefd):
             response = fifo.readline()
             color = fifo.readline()
             color = "'" + color[0:7] + "'"
-            msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
-            slack_client.api_call("chat.postMessage",channel=ALERT_CHANNEL,text='',attachments=msg, as_user=True)
+            msg = json.dumps([{'pretext': pre_response,'text': response,'color': color,'mrkdwn_in': ['pretext','text']}])
+            slack_client.api_call("chat.postMessage", channel=ALERT_CHANNEL, text='', attachments=msg, as_user=True)
         time.sleep(1)
 
 def handle_command(command, channel):
+    #orig_stdout = sys.stdout
+    #out = open('/home/xr34ct/Documents/morpheus/.logs', 'w')
+    #sys.stdout = out
+    print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Command " + command + " issued")
     pre_response = "Not sure what you mean Mortal"
     response = "See list to see what you can ask the gods"
     color = '#00FFFF'
@@ -128,6 +142,9 @@ def handle_command(command, channel):
 
     msg = json.dumps([{'pretext':pre_response,'text':response,'color':color,'mrkdwn_in':['pretext','text']}])
     slack_client.api_call("chat.postMessage",channel=channel,text='',attachments=msg, as_user=True)
+    
+    #sys.stdout = orig_stdout
+    #out.close()
 
 
 def parse_slack_output(slack_rtm_output):
@@ -143,7 +160,7 @@ def parse_slack_output(slack_rtm_output):
 if __name__ == "__main__":
     READ_WEBSOCKET_DELAY = 1 
     if slack_client.rtm_connect():
-        print("Morpheus connected and running!")
+        print(datetime.datetime.now().strftime("%d %m %y - %H:%M:%S") + " Morpheus connected and running!")
         thread = Thread(target=monitor_alerts, args =[monitor_pipe] )
         thread.start()
         while True:
