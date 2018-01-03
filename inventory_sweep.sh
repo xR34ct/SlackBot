@@ -8,28 +8,26 @@ function sweep() {
   while read -r host; do
 	port=$(awk '{print $2}' <<< "$host")
 	ip=$(awk '{print $1}' <<< "$host")
-        name=$(host "$ip" | awk '{ print $5 }')
-        service=$(awk '{print $3}' <<< "$host")
+    name=$(host "$ip" | head -n 1 | awk '{ print $NF }')
+    service=$(awk '{print $3}' <<< "$host")
 	result=$(nmap "$ip" -p "$port" --open | grep "open")
 	in_alerts=$(grep "$ip" "$alerts_file" | grep "$port")
-	if [[ "$result" ]] && [[ "$in_alerts" ]]; then
+    if [[ "$result" ]] && [[ "$in_alerts" ]]; then
 		printf "Host: %-16s %-30s Port: %s (%s)\t [%b]\n" "$ip" "($name)" "$port" "$service" "\e[1;32mRESOLVED\e[0m"
 		grep -v "$in_alerts" "$alerts_file" > "$tmpfile"
 		cat "$tmpfile" > "$alerts_file"
-                pre_response="The following service just became RESOLVED:"
-                response="$service on $name - $ip"
-                #color="good"
-                color="#00FF00"
-                notify "$pre_response" "$response" "$color"
+        pre_response="The following service just became RESOLVED:"
+        response="$service on $name - $ip"
+        color="#00FF00"
+        notify "$pre_response" "$response" "$color"
 
 	elif [[ -z "$result" ]] && [[ -z "$in_alerts" ]]; then 
 		printf "Host: %-16s %-30s Port: %s (%s)\t [%b]\n" "$ip" "($name)" "$port" "$service" "\e[1;31mDOWN\e[0m"
 		printf "%s\t %s\n" "$ip" "$port" >> "$alerts_file"
 		pre_response="The following service just went DOWN:"
-                response="$service on $name - $ip"
-#                color="danger"
-                color="#FF0000"
-                notify "$pre_response" "$response" "$color"
+        response="$service on $name - $ip"
+        color="#FF0000"
+        notify "$pre_response" "$response" "$color"
 
        	else
 		printf "Host: %-16s %-30s Port: %s (%s)\t [%b]\n" "$ip" "($name)" "$port" "$service" "\e[1;33mUNCHAGNED\e[0m"
