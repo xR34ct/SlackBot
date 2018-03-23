@@ -8,6 +8,7 @@ from threading import Thread
 from slackclient import SlackClient
 import ipgetter
 import json
+import requests
 from env import *
 
 #BOT_ID = os.environ.get("BOT_ID")
@@ -102,6 +103,12 @@ def monitor_alerts(pipefd):
             color = "'" + color[0:7] + "'"
             msg = json.dumps([{'pretext': pre_response,'text': response,'color': color,'mrkdwn_in': ['pretext','text']}])
             slack_client.api_call("chat.postMessage", channel=ALERT_CHANNEL, text='', attachments=msg, as_user=True)
+            url = 'https://hass.avdagic.net/api/states/binary_sensor.down'
+            headers = {'x-ha-access': HASS_PW, 'Content-Type': 'application/json'}
+            payload = {'state': 'on'}
+            requests.post(url, headers=headers, data=json.dumps(payload))
+            payload = {'state': 'off'}
+            requests.post(url, headers=headers, data=json.dumps(payload))
         time.sleep(1)
 
 def handle_command(command, channel):
